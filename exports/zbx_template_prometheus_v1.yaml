@@ -1,0 +1,67 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-11-03T18:03:11Z'
+  template_groups:
+    -
+      uuid: c2c162144c2d4c5491c8801193af4945
+      name: Templates/Cloud
+  templates:
+    -
+      uuid: 318e2b13132946159fb585ec45ccc93d
+      template: 'Prometheus Discovery - NodeJS'
+      name: 'Prometheus Discovery - NodeJS'
+      description: 'Sample template with discovery from prometheus metrics'
+      groups:
+        -
+          name: Templates/Cloud
+      items:
+        -
+          uuid: 0c5ac25c2e5f4de28e68f3b10a14095f
+          name: 'NodeJS Prometheus Raw'
+          type: HTTP_AGENT
+          key: nodejsapp.raw
+          trends: '0'
+          value_type: TEXT
+          url: 'http://nodejs-sample:8080/metrics'
+      discovery_rules:
+        -
+          uuid: 641f36881cea4aa19b7ad4f15a1943d7
+          name: Discovery
+          type: DEPENDENT
+          key: nodejsapp.ldd
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 4d58a7b693fe408990bb1cb245e7c76d
+              name: 'Heap space {#SPACE} used'
+              type: DEPENDENT
+              key: 'nodejsapp.heap[{#SPACE},used]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: PROMETHEUS_PATTERN
+                  parameters:
+                    - '{#METRIC}{space="{#SPACE}"}'
+                    - value
+                    - ''
+              master_item:
+                key: nodejsapp.raw
+          master_item:
+            key: nodejsapp.raw
+          lld_macro_paths:
+            -
+              lld_macro: '{#HELP}'
+              path: '$[''help'']'
+            -
+              lld_macro: '{#METRIC}'
+              path: '$[''name'']'
+            -
+              lld_macro: '{#SPACE}'
+              path: '$.labels[''space'']'
+          preprocessing:
+            -
+              type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'nodejs_heap_space_size_used_bytes{space=~".*"}'
