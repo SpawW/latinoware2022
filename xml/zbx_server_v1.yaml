@@ -1,0 +1,31 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-11-02T23:20:52Z'
+  host_groups:
+    -
+      uuid: 6f6799aa69e844b4b3918f779f2abf08
+      name: 'Zabbix servers'
+  hosts:
+    -
+      host: 'Zabbix server'
+      name: 'Zabbix server'
+      templates:
+        -
+          name: 'Linux by Zabbix agent'
+        -
+          name: 'Zabbix server health'
+      groups:
+        -
+          name: 'Zabbix servers'
+      interfaces:
+        -
+          useip: 'NO'
+          ip: ''
+          dns: zabbix-agent
+          interface_ref: if1
+      inventory:
+        name: af90fd413270
+        os: 'Linux version 5.15.0-52-generic (buildd@lcy02-amd64-032) (gcc (Ubuntu 11.2.0-19ubuntu1) 11.2.0, GNU ld (GNU Binutils for Ubuntu)'
+        location_lat: '56.95387'
+        location_lon: '24.22067'
+      inventory_mode: AUTOMATIC
