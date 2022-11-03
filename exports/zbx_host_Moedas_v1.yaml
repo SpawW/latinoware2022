@@ -1,0 +1,105 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-11-03T17:09:25Z'
+  host_groups:
+    -
+      uuid: a4364ce3dc064a7b918ab7d7c8e05c73
+      name: Latinoware
+  hosts:
+    -
+      host: Moedas
+      name: Moedas
+      groups:
+        -
+          name: Latinoware
+      interfaces:
+        -
+          interface_ref: if1
+      items:
+        -
+          name: 'Cotação do Dolar - Remessa Online - RAW'
+          type: HTTP_AGENT
+          key: ro.dolar.raw
+          delay: '5m;1h/1-5,00:00-07:30;1h/1-5,19:00-23:59;0/6-7,00:00-23:59'
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          interface_ref: if1
+          timeout: 30s
+          url: 'https://www.remessaonline.com.br/v1/pricing?area=19&id_currency_store=4105&id_operation_type=3&operationType=2&quantity=1000.00&reverse=false&total_value=5335.59'
+          verify_host: 'YES'
+        -
+          name: 'Dolar - Cotação'
+          type: DEPENDENT
+          key: ro.dolar.raw.cotacao
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.exchange_rate
+          master_item:
+            key: ro.dolar.raw
+          triggers:
+            -
+              expression: 'avg(/Moedas/ro.dolar.raw.cotacao,#3)*100/avg(/Moedas/ro.dolar.raw.cotacao,24h)<=99'
+              name: 'Dolar em queda significativa => 1%'
+              priority: HIGH
+        -
+          name: 'Dolar - Spread'
+          type: DEPENDENT
+          key: ro.dolar.raw.spread
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.spread_original
+          master_item:
+            key: ro.dolar.raw
+        -
+          name: 'Wise - Dolar'
+          type: DEPENDENT
+          key: ro.wise.dolar
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.paymentOptions[0].sourceAmount'
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return value / 1000'
+          master_item:
+            key: ro.wise.dolar.raw
+        -
+          name: 'Cotação do Dolar - Wise - RAW'
+          type: HTTP_AGENT
+          key: ro.wise.dolar.raw
+          delay: '5m;1h/1-5,00:00-07:30;1h/1-5,19:00-23:59;0/6-7,00:00-23:59'
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          interface_ref: if1
+          timeout: 30s
+          url: 'https://wise.com/gateway/v3/quotes/'
+          posts: '{"targetAmount":1000,"sourceCurrency":"BRL","targetCurrency":"USD","preferredPayIn":null,"guaranteedTargetAmount":false,"type":"REGULAR"}'
+          post_type: JSON
+          request_method: POST
+          verify_host: 'YES'
+      inventory_mode: DISABLED
+  graphs:
+    -
+      name: 'Performance Dolar'
+      graph_items:
+        -
+          sortorder: '1'
+          drawtype: GRADIENT_LINE
+          color: 1A7C11
+          item:
+            host: Moedas
+            key: ro.dolar.raw.cotacao

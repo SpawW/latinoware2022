@@ -31,6 +31,7 @@ services:
     links:
       - mysql
     restart: always
+    privileged: true
     ports:
       - "10051:10051"
     volumes:

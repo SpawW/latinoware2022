@@ -1,0 +1,145 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-11-03T15:18:00Z'
+  template_groups:
+    -
+      uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    -
+      uuid: 61083b6f0b7445f28bc8582d2ff25874
+      template: 'ICMP Ping - Tuning'
+      name: 'ICMP Ping - Tuning'
+      description: |
+        Original template:
+        Template Module ICMP Ping / Template tooling version used: 0.41
+      groups:
+        -
+          name: Templates/Modules
+      items:
+        -
+          uuid: 4fa69c8abd6b49a7b2c3764c5ba9c07d
+          name: 'ICMP loss'
+          type: SIMPLE
+          key: icmppingloss
+          history: 1w
+          status: DISABLED
+          value_type: FLOAT
+          units: '%'
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 9e9e22b1e488422c808008400bd13094
+              expression: 'min(/ICMP Ping - Tuning/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/ICMP Ping - Tuning/icmppingloss,5m)<100'
+              name: 'High ICMP ping loss'
+              opdata: 'Loss: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'Unavailable by ICMP ping'
+                  expression: 'max(/ICMP Ping - Tuning/icmppingsec.status,#3)=0'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: a715cb66ecd24996af23051b1d2ab7c7
+          name: 'ICMP response time'
+          type: SIMPLE
+          key: icmppingsec
+          delay: 10s
+          history: 1w
+          value_type: FLOAT
+          units: s
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 355bf9903d564e53b91062b70218eb82
+              expression: 'avg(/ICMP Ping - Tuning/icmppingsec,5m)>{$ICMP_RESPONSE_TIME_WARN}'
+              name: 'High ICMP ping response time'
+              opdata: 'Value: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'High ICMP ping loss'
+                  expression: 'min(/ICMP Ping - Tuning/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/ICMP Ping - Tuning/icmppingloss,5m)<100'
+                -
+                  name: 'Unavailable by ICMP ping'
+                  expression: 'max(/ICMP Ping - Tuning/icmppingsec.status,#3)=0'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: 7d10ffc4de0247f486b1c04157c04295
+          name: 'ICMP - Status'
+          type: DEPENDENT
+          key: icmppingsec.status
+          delay: '0'
+          valuemap:
+            name: 'Service state'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return (value > 0 ? 1 : 0)'
+            -
+              type: DISCARD_UNCHANGED
+              parameters:
+                - ''
+          master_item:
+            key: icmppingsec
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 70471add15764c62baae8fdb26fa0265
+              expression: 'max(/ICMP Ping - Tuning/icmppingsec.status,#3)=0'
+              name: 'Unavailable by ICMP ping'
+              priority: HIGH
+              description: 'Last three attempts returned timeout.  Please check device connectivity.'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+      macros:
+        -
+          macro: '{$ICMP_LOSS_WARN}'
+          value: '20'
+        -
+          macro: '{$ICMP_RESPONSE_TIME_WARN}'
+          value: '0.15'
+      valuemaps:
+        -
+          uuid: 73bd3a75d6e84e83b4a591645c8c717e
+          name: 'Service state'
+          mappings:
+            -
+              value: '0'
+              newvalue: Down
+            -
+              value: '1'
+              newvalue: Up

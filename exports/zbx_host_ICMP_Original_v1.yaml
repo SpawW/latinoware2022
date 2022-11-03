@@ -1,0 +1,24 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-11-03T10:02:13Z'
+  host_groups:
+    -
+      uuid: a4364ce3dc064a7b918ab7d7c8e05c73
+      name: Latinoware
+  hosts:
+    -
+      host: 'ICMP Original'
+      name: 'ICMP Original'
+      templates:
+        -
+          name: 'ICMP Ping'
+      groups:
+        -
+          name: Latinoware
+      interfaces:
+        -
+          useip: 'NO'
+          ip: ''
+          dns: zabbix-agent
+          interface_ref: if1
+      inventory_mode: DISABLED
